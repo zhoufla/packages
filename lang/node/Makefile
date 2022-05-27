@@ -6,28 +6,27 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 
-ifeq ($(CONFIG_NODEJS_16),y)
-PKG_VERSION:=v16.14.2
+ifeq ($(CONFIG_NODEJS_18),y)
+PKG_VERSION:=v18.2.0
 PKG_RELEASE:=1
-PKG_HASH:=e922e215cc68eb5f94d33e8a0b61e2c863b7731cc8600ab955d3822da90ff8d1
+PKG_HASH:=2305b15ebf5547474e905b5002f9ba99c7eeef01d7394dfe6f3846cc6bcad66d
+PATCH_DIR:=./patches/v18.x
+else
+ifeq ($(CONFIG_NODEJS_16),y)
+PKG_VERSION:=v16.15.0
+PKG_RELEASE:=1
+PKG_HASH:=a0f812efc43f78321eca08957960a48f5e6bf97004d5058c8dd3b03c646ea4f7
 PATCH_DIR:=./patches/v16.x
 else
-ifeq ($(CONFIG_NODEJS_14),y)
-PKG_VERSION:=v14.19.1
+PKG_VERSION:=v14.19.3
 PKG_RELEASE:=1
-PKG_HASH:=e1ae09dd861ab39af04483bb5c0fa54ddd82b6b15543be9a27ea6704a8ba9dd9
+PKG_HASH:=5cf45b1f1aca77523acf36240c1d53a999279070a7711eabf23346f88b0cc994
 PATCH_DIR:=./patches/v14.x
-else
-PKG_VERSION:=v12.22.12
-PKG_RELEASE:=1
-PKG_HASH:=bc42b7f8495b9bfc7f7850dd180bb02a5bdf139cc232b8c6f02a6967e20714f2
-PATCH_DIR:=./patches/v12.x
 endif
 endif
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://mirrors.tencent.com/nodejs-release/$(PKG_VERSION) \
-                https://cdn.npmmirror.com/binaries/node/$(PKG_VERSION) \
                 https://nodejs.org/dist/$(PKG_VERSION)
 
 PKG_MAINTAINER:=Hirokazu MORIKAWA <morikw2@gmail.com>
@@ -55,7 +54,7 @@ define Package/node
   URL:=https://nodejs.org/
   DEPENDS:=@HAS_FPU @(i386||x86_64||arm||aarch64||mipsel) \
 	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv \
-	   +libatomic +NODEJS_ICU_SYSTEM:icu +NODEJS_ICU_SYSTEM:icu-full-data
+	   +libcares +libatomic +NODEJS_ICU_SYSTEM:icu +NODEJS_ICU_SYSTEM:icu-full-data
 endef
 
 define Package/node/description
@@ -93,14 +92,14 @@ define Package/node/config
 		help
 		 Select node.js version.
 
-		config NODEJS_12
-			bool "12.x Maintenance LTS"
-
 		config NODEJS_14
 			bool "14.x Maintenance LTS"
 
 		config NODEJS_16
 			bool "16.x Active LTS"
+
+		config NODEJS_18
+			bool "18.x Current"
 	endchoice
 
 	choice
@@ -131,10 +130,10 @@ endif
 
 MAKE_VARS+= \
 	DESTCPU=$(NODEJS_CPU) \
-	NO_LOAD='cctest.target.mk embedtest.target.mk node_mksnapshot.target.mk' \
+	NO_LOAD='cctest.target.mk embedtest.target.mk node_mksnapshot.target.mk overlapped-checker.target.mk mkcodecache.target.mk' \
 	LD_LIBRARY_PATH=$(STAGING_DIR_HOSTPKG)/share/icu/current/lib
 
-HOST_MAKE_VARS+=NO_LOAD='cctest.target.mk embedtest.target.mk'
+HOST_MAKE_VARS+=NO_LOAD='cctest.target.mk embedtest.target.mk overlapped-checker.target.mk'
 
 CONFIGURE_VARS:= \
 	CC="$(TARGET_CC) $(TARGET_OPTIMIZATION)" \
@@ -150,6 +149,7 @@ CONFIGURE_ARGS:= \
 	--shared-openssl \
 	--shared-nghttp2 \
 	--shared-libuv \
+	--shared-cares \
 	--with-intl=$(if $(CONFIG_NODEJS_ICU_SMALL),small-icu,$(if $(CONFIG_NODEJS_ICU_SYSTEM),system-icu,none)) \
 	$(if $(findstring +neon,$(CONFIG_CPU_TYPE)),--with-arm-fpu=neon) \
 	$(if $(findstring +vfp",$(CONFIG_CPU_TYPE)),--with-arm-fpu=vfp) \
@@ -174,7 +174,6 @@ define Package/node/install
 endef
 
 define Package/node-npm/install
-	$(RM) $(1)/usr/lib/node_modules/npm
 	$(INSTALL_DIR) $(1)/usr/lib/node_modules/npm
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{package.json,LICENSE} \
 		$(1)/usr/lib/node_modules/npm/
@@ -190,6 +189,11 @@ endef
 define Package/node-npm/postrm
 #!/bin/sh
 rm -rf /usr/lib/node_modules/npm || true
+endef
+
+define Host/Install
+	$(RM) -rf $(1)/lib/node_modules/npm
+	$(call Host/Install/Default)
 endef
 
 $(eval $(call HostBuild))
