@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.107.11
+PKG_VERSION:=0.107.24
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/AdguardTeam/AdGuardHome
-PKG_MIRROR_HASH:=a174648d590124b565a73f8a8ed5ebaef2ec464b509bc92741bc964ef1a2f394
+PKG_MIRROR_HASH:=ff5e38d977b8c8f5a546b745ab46894dd4b55f76b447b147287b47d03f6cd507
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -21,8 +21,6 @@ PKG_MAINTAINER:=Dobroslaw Kijowski <dobo90@gmail.com>
 PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
-
-PKG_CONFIG_DEPENDS:=CONFIG_ADGUARDHOME_COMPRESS_GOPROXY
 
 GO_PKG:=github.com/AdguardTeam/AdGuardHome
 GO_PKG_BUILD_PKG:=github.com/AdguardTeam/AdGuardHome
@@ -54,17 +52,6 @@ endef
 define Package/adguardhome/description
 Free and open source, powerful network-wide ads and trackers blocking DNS server.
 endef
-
-define Package/$(PKG_NAME)/config
-config ADGUARDHOME_COMPRESS_GOPROXY
-	bool "Compiling with GOPROXY proxy"
-	default n
-endef
-
-ifeq ($(CONFIG_ADGUARDHOME_COMPRESS_GOPROXY),y)
-export GO111MODULE=on
-export GOPROXY=https://goproxy.bj.bcebos.com
-endif
 
 define Build/Compile
 	( \
