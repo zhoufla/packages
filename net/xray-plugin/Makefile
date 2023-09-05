@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
-# Copyright (C) 2022 ImmortalWrt.org
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xray-plugin
-PKG_VERSION:=1.8.4
+PKG_VERSION:=1.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/teddysun/xray-plugin/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7154310f1108bb8538327f35696cbce1ca22feb1e7d26922a8a359ccab68d952
+PKG_HASH:=78c9c7f3e049d555b68914b545224cb9fd8253b75fe797a62a54b6e9af0bf870
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -23,7 +23,7 @@ PKG_USE_MIPS16:=0
 GO_PKG:=github.com/teddysun/xray-plugin
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/xray-plugin
   SECTION:=net
